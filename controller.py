@@ -6,27 +6,16 @@
 import logging
 import logging.config
 import re
-import subprocess
 import socket
 import json
 from signal import signal, SIGINT
 from types import SimpleNamespace
 
-# Install packages for RS232 and MQTT connection, if required
-try:
-    import asyncio
-    import yaml
-    import serial_asyncio
-    from paho.mqtt import client as mqtt_client
-except:
-    print("Installing python package dependencies...")
-    pip_install = subprocess.Popen(
-        ["pip3", "install", "-r", "requirements.txt"])
-    pip_install.communicate()
-    import asyncio
-    import yaml
-    import serial_asyncio
-    from paho.mqtt import client as mqtt_client
+# Install external packages
+import asyncio
+import yaml
+import serial_asyncio
+from paho.mqtt import client as mqtt_client
 
 
 STX = b'\x02'  # Start of Text
