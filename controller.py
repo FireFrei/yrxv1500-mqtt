@@ -1244,7 +1244,10 @@ class MqttClient:
 
     async def run(self):
         # Set Connecting Client ID
-        self.client = mqtt_client.Client(self.config.client_id)
+        self.client = mqtt_client.Client(
+            callback_api_version=mqtt_client.CallbackAPIVersion.VERSION2,
+            client_id=self.config.client_id
+        )
         self.client.username_pw_set(self.config.username, self.config.password)
         self.client.reconnect_delay_set(min_delay=1, max_delay=120)
         self.client.on_connect = self.on_connect
@@ -1254,24 +1257,24 @@ class MqttClient:
         self._aioh = self.AsyncioHelper(self.loop, self.client)
         await self._aioh.connect(self.config)
     
-    def on_connect(self, client, userdata, flags, rc):
-        if rc == 0:
+    def on_connect(self, client, userdata, flags, reason_code, properties):
+        if reason_code == 0:
             self.log.info("Connected to MQTT broker >>%s<<" %
                           (self.config.host))
             self.loop.create_task(self.on_connect_callback())
         else:
-            self.log.error("Failed to connect, return code >>%d<<", rc)
+            self.log.error("Failed to connect, return code >>%d<<", reason_code)
 
-    def on_disconnect(self, client, userdata, rc):
-        if rc == 0:
+    def on_disconnect(self, client, userdata, flags, reason_code, properties):
+        if reason_code == 0:
             self.log.info("Disconnected from MQTT broker")
         else:
             self.log.warning(
-                "Unexpected disconnetion from MQTT broker, return code >>%d<<", rc)
+                "Unexpected disconnetion from MQTT broker, return code >>%d<<", reason_code)
         self.loop.create_task(self.on_disconnect_callback())
 
         # Trigger reconnect
-        if rc != 0:
+        if reason_code != 0:
             self.loop.create_task(self._aioh.connect(self.config))
 
     async def publish(self, topic_state, payload, qos=0, retain=False):
